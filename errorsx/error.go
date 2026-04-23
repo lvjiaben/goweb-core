@@ -6,18 +6,18 @@ import (
 )
 
 const (
-	CodeOK           = 0
-	CodeBadRequest   = 40000
-	CodeUnauthorized = 40100
-	CodeForbidden    = 40300
-	CodeNotFound     = 40400
-	CodeInternal     = 50000
+	CodeOK           = http.StatusOK
+	CodeBadRequest   = http.StatusBadRequest
+	CodeUnauthorized = http.StatusUnauthorized
+	CodeForbidden    = http.StatusForbidden
+	CodeNotFound     = http.StatusNotFound
+	CodeInternal     = http.StatusInternalServerError
 )
 
 type Error struct {
 	HTTPStatus int
 	Code       int
-	Msg        string
+	Message    string
 	Err        error
 }
 
@@ -25,7 +25,7 @@ func (e *Error) Error() string {
 	if e.Err != nil {
 		return e.Err.Error()
 	}
-	return e.Msg
+	return e.Message
 }
 
 func (e *Error) Unwrap() error {
@@ -36,7 +36,7 @@ func New(status int, code int, msg string) *Error {
 	return &Error{
 		HTTPStatus: status,
 		Code:       code,
-		Msg:        msg,
+		Message:    msg,
 	}
 }
 
@@ -44,7 +44,7 @@ func Wrap(err error, status int, code int, msg string) *Error {
 	return &Error{
 		HTTPStatus: status,
 		Code:       code,
-		Msg:        msg,
+		Message:    msg,
 		Err:        err,
 	}
 }

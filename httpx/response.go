@@ -2,7 +2,7 @@ package httpx
 
 type Response struct {
 	Code      int    `json:"code"`
-	Msg       string `json:"msg"`
+	Message   string `json:"message"`
 	Data      any    `json:"data"`
 	RequestID string `json:"request_id"`
 }

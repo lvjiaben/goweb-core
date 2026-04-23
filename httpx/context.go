@@ -122,14 +122,14 @@ func (c *Context) JSON(status int, code int, msg string, data any) {
 	c.WriteHeader(status)
 	_ = json.NewEncoder(c.Writer).Encode(Response{
 		Code:      code,
-		Msg:       msg,
+		Message:   msg,
 		Data:      normalizeData(data),
 		RequestID: c.RequestID(),
 	})
 }
 
 func (c *Context) Success(data any) {
-	c.JSON(http.StatusOK, 0, "ok", data)
+	c.JSON(http.StatusOK, http.StatusOK, "ok", data)
 }
 
 func (c *Context) Fail(status int, code int, msg string, data any) {
@@ -138,7 +138,7 @@ func (c *Context) Fail(status int, code int, msg string, data any) {
 
 func (c *Context) Error(err error) {
 	appErr := errorsx.From(err)
-	c.JSON(appErr.HTTPStatus, appErr.Code, appErr.Msg, map[string]any{})
+	c.JSON(appErr.HTTPStatus, appErr.Code, appErr.Message, map[string]any{})
 }
 
 func (c *Context) BadRequest(msg string) {

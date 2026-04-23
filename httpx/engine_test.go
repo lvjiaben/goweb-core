@@ -59,8 +59,8 @@ func TestMethodMismatchReturns405(t *testing.T) {
 	if body.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("code = %d, want %d", body.Code, http.StatusMethodNotAllowed)
 	}
-	if body.Msg != "method not allowed" {
-		t.Fatalf("msg = %q", body.Msg)
+	if body.Message != "method not allowed" {
+		t.Fatalf("message = %q", body.Message)
 	}
 	data, ok := body.Data.(map[string]any)
 	if !ok {

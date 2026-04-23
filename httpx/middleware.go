@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lvjiaben/goweb-core/errorsx"
 )
 
 type CORSConfig struct {
@@ -27,7 +28,7 @@ func Recover(logger *slog.Logger) Middleware {
 					if logger != nil {
 						logger.Error("panic recovered", "panic", recovered, "path", c.Request.URL.Path, "request_id", c.RequestID())
 					}
-					c.Fail(http.StatusInternalServerError, 50000, "internal server error", map[string]any{})
+					c.Fail(http.StatusInternalServerError, errorsx.CodeInternal, "internal server error", map[string]any{})
 				}
 			}()
 			next(c)
