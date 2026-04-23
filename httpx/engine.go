@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"path"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -87,12 +88,20 @@ func (e *Engine) Routes() []*Route {
 	for _, route := range e.routes {
 		out = append(out, route)
 	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Path == out[j].Path {
+			return out[i].Method < out[j].Method
+		}
+		return out[i].Path < out[j].Path
+	})
 	return out
 }
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	routePath := cleanPath(r.URL.Path)
 	e.mu.RLock()
-	route := e.routes[routeKey(r.Method, cleanPath(r.URL.Path))]
+	route := e.routes[routeKey(r.Method, routePath)]
+	allowedMethods := e.allowedMethodsLocked(routePath)
 	e.mu.RUnlock()
 
 	ctx := newContext(w, r)
@@ -102,10 +111,23 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	finalHandler := e.notFound
 	if route != nil {
 		finalHandler = route.Handler
+	} else if len(allowedMethods) > 0 {
+		finalHandler = methodNotAllowed(allowedMethods)
 	}
 
 	handler := chain(finalHandler, e.middlewares...)
 	handler(ctx)
+}
+
+func (e *Engine) allowedMethodsLocked(routePath string) []string {
+	allowed := make([]string, 0)
+	for _, route := range e.routes {
+		if route.Path == routePath {
+			allowed = append(allowed, route.Method)
+		}
+	}
+	sort.Strings(allowed)
+	return allowed
 }
 
 func (g *Group) Use(middlewares ...Middleware) {
@@ -181,4 +203,15 @@ func joinPath(parts ...string) string {
 
 func defaultNotFound(c *Context) {
 	c.NotFound("route not found")
+}
+
+func methodNotAllowed(allow []string) HandlerFunc {
+	return func(c *Context) {
+		c.SetHeader("Allow", strings.Join(allow, ", "))
+		c.JSON(http.StatusMethodNotAllowed, http.StatusMethodNotAllowed, "method not allowed", map[string]any{
+			"path":   cleanPath(c.Request.URL.Path),
+			"method": strings.ToUpper(c.Request.Method),
+			"allow":  allow,
+		})
+	}
 }
